@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>用户登录</title>
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/login.css">
+</head>
+<body>
+<div class="wrapper" id="app">
+    <div id="header">
+        <img class="card" src="img/card.png" alt="">
+        <div class="title">登录通行证</div>
+        <a href="regist.html" class="login">注册</a>
+    </div>
+    <div class="hr"></div>
+    <div style="overflow: hidden;">
+        <div id="form">
+            <table>
+                <tr>
+                    <td>用户名</td>
+                    <td><input type="text" name="username" v-model="username" placeholder="请输入用户名"></td>
+                </tr>
+                <tr>
+                    <td>密<span style="opacity: 0;">户</span>码</td>
+                    <td>
+                        <input type="password" name="password" v-model="password" id="password" placeholder="请输入密码"><br>
+                        <input type="checkbox" value="remember" id="remember" checked="checked"><a
+                            href="javascript:;"><label for="remember">记住我</label></a>
+                        <div id="submit" @click="submit">登 录</div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <img src="img/footer.png" alt="" id="footer">
+</div>
+
+<script src="js/jquery.min.js"></script>
+<script src="js/vue.js"></script>
+<script src="js/cookie.js"></script>
+<script>
+    $(function () {
+        var app = new Vue({
+            el: "#app",
+            data: {
+                username: "",
+                password: "",
+            },
+            methods: {
+                submit: function () {
+                    if(this.username == ""){
+                        alert("用户名不能为空");
+                        return false;
+                    }
+                    if(this.password == ""){
+                        alert("密码不能为空");
+                        return false;
+                    }
+                    $.get("/login", {
+                        user: this.username,
+                        pwd: this.password
+                    }, function (data) {
+                        if(data.length > 0){
+                            var str = JSON.stringify(data[0]);
+                            var bClick = $("#remember").is(":checked");
+                            if(bClick){
+                                //存入cookie
+                                $.cookie('loginUser', str, { expires: 7 });
+                            }
+                            sessionStorage.loginUser = str;
+                            window.location = "";
+                        }else{
+                            alert("用户名或密码错误");
+                        }
+                    }, "json");
+                },
+                cookie: function(){
+                    var str = $.cookie("loginUser");
+                    if(str){
+                        var json = JSON.parse(str);
+                        this.username = json.username;
+                        this.password = json.password;
+                    }
+                }
+            }
+        });
+        app.cookie();
+    });
+</script>
+</body>
+</html>

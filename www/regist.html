@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>用户注册</title>
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/regist.css">
+</head>
+<body>
+<div class="wrapper" id="app">
+    <div id="header">
+        <img class="card" src="img/card.png" alt="">
+        <div class="title">注册通行证</div>
+        <a href="/login.html" class="login">登录</a>
+    </div>
+    <div class="hr"></div>
+    <table id="form">
+        <tr>
+            <td>用户名</td>
+            <td>
+                <input id="username" type="text" placeholder="请输入用户名" v-model="username">
+                <span id="have"></span>
+                <div class="ps">4-16位中文、英文、数字、下划线或减号，注册后不可修改</div>
+            </td>
+        </tr>
+        <tr>
+            <td>密&nbsp;&nbsp; 码</td>
+            <td>
+                <input type="password" placeholder="请输入密码" v-model="password1">
+                <div class="ps">由6-16位字符组成</div>
+            </td>
+        </tr>
+        <tr>
+            <td>确认密码</td>
+            <td>
+                <input type="password" placeholder="请再次输入密码" v-model="password2" @blur="same">
+                <span id="same"></span>
+                <div class="ps">由6-16位字符组成</div>
+            </td>
+        </tr>
+        <tr>
+            <td>昵&nbsp;&nbsp; 称</td>
+            <td>
+                <input type="text" placeholder="请输入昵称" v-model="nickname">
+                <div class="ps">4-16位中文、英文、数字组成</div>
+            </td>
+        </tr>
+        <tr>
+            <td>验证码</td>
+            <td>
+                <a class="code" href="javascript:;">
+                    <div>1</div>
+                    <div>2</div>
+                    <div>3</div>
+                    <div>4</div>
+                </a>
+                <a class="change" href="javascript:;">换一张</a>
+                <br><br><br>
+                <div class="ps">4位数字组成</div>
+                <input type="text" placeholder="请输入验证码" class="code-input" v-model="code">
+                <span id="error"></span>
+                <div id="submit"><img src="img/regist.gif" alt="" @click="send"></div>
+            </td>
+        </tr>
+    </table>
+    <img src="img/footer.png" alt="" id="footer">
+</div>
+</body>
+<script src="js/jquery.min.js"></script>
+<script src="js/vue.js"></script>
+<script>
+    $(function () {
+        // 该函数用来生成验证码
+        function code() {
+            var $coad = $(".code div");
+            for (var i = 0; i < $coad.length; i++) {
+                var random1 = Math.floor(Math.random() * 60 - 30);
+                var random2 = Math.floor(Math.random() * 60 - 30);
+                var random0 = Math.floor(Math.random() * 10);
+                var random3 = Math.floor(Math.random() * 900000 + 100000);
+                $coad.eq(i).css({
+                    transform: "skew(" + random1 + "deg," + random2 + "deg)",
+                    color: "#" + random3
+                }).html(random0);
+            }
+        }
+
+        // 该函数用来查询用户名是否存在
+        function checkUser() {
+            var $have = $("#have");
+            var val = $("#username").val();
+            if(val != ""){
+                $.get("/checkUser", {
+                    user: val
+                }, function (data) {
+                    if (data == "have") {
+                        $have.html("该用户名已被注册").css("color", "#f00");
+                    } else {
+                        $have.html("可以使用").css("color", "#5bc700");
+                    }
+                }, "text");
+            }
+        }
+
+        code(); //生成验证码
+        $(document).on("click", ".change", code);
+        $(document).on("click", ".code", code);
+        $(document).on("blur", "#username", checkUser);
+
+        var vue = new Vue({
+            el: "#app",
+            data: {
+                username: "",
+                password1: "",
+                password2: "",
+                nickname: "",
+                code: "",
+            },
+            methods: {
+                send: function () {
+                    var str = $(".code").text();
+                    var nowStr = str.replace(/\s/g, "");
+                    if(this.username == ""){
+                        alert("用户名不能为空");
+                        return false;
+                    }
+                    if(this.password1 == ""){
+                        alert("密码不能为空");
+                        return false;
+                    }
+                    if(this.password2 == ""){
+                        alert("密码不能为空");
+                        return false;
+                    }
+                    if(this.password1 != this.password2){
+                        alert("两次输入的密码不一致");
+                        return false;
+                    }
+                    if (this.code != nowStr) {
+                        $("#error").html("验证码输入错误!");
+                    } else {
+                        $.get("/do_regist", {
+                            user: this.username,
+                            pwd1: this.password1,
+                            nickname: this.nickname,
+                        }, function (data) {
+                            if (data == "success") {
+                                alert("注册成功");
+                                // 跳转到登录页面
+                                window.location = "login.html";
+                            } else {
+                                alert("填写有误!");
+                            }
+                        }, "text");
+                    }
+                },
+                same: function () {
+                    var $same = $("#same");
+                    if(this.password1 != "" && this.password2 != ""){
+                        if (this.password1 != this.password2) {
+                            $same.html("两次输入的密码不一致").css("color", "#f00");
+                        } else {
+                            $same.html("正确").css("color", "#5bc700");
+                        }
+                    }
+                },
+            },
+        });
+    });
+</script>
+
+</html>
